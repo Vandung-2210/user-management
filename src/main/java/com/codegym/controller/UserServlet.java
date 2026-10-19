@@ -36,7 +36,11 @@ public class UserServlet extends HttpServlet {
                             permissions[i] = Integer.parseInt(permissionsStr[i]);
                         }
                     }
-                    userDAO.addUserTransaction(new User(name, email, country), permissions);
+                    try {
+                        userDAO.addUserTransaction(new User(name, email, country), permissions);
+                    } catch (Exception e) {
+                        System.out.println("Rollback transaction completed for user: " + name);
+                    }
                     response.sendRedirect("users");
                     break;
                 case "edit":

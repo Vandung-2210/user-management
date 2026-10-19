@@ -168,6 +168,7 @@ public class UserDAO implements IUserDAO {
         }
     }
 
+    // LUYỆN TẬP TRANSACTION: Thêm User và Phân quyền, tự động Rollback khi lỗi
     @Override
     public void addUserTransaction(User user, int[] permissionIds) throws SQLException {
         Connection connection = null;
@@ -177,7 +178,7 @@ public class UserDAO implements IUserDAO {
 
         try {
             connection = getConnection();
-            connection.setAutoCommit(false);
+            connection.setAutoCommit(false); // Bắt đầu transaction
 
             String insertUserSql = "INSERT INTO users (name, email, country) VALUES (?, ?, ?)";
             pstmtUser = connection.prepareStatement(insertUserSql, Statement.RETURN_GENERATED_KEYS);
@@ -202,11 +203,13 @@ public class UserDAO implements IUserDAO {
                 }
             }
 
-            connection.commit();
+            connection.commit(); // Thành công: ghi nhận dữ liệu
+            System.out.println("Transaction addUserTransaction thành công: Đã commit!");
         } catch (SQLException e) {
             if (connection != null) {
                 try {
-                    connection.rollback();
+                    connection.rollback(); // Có lỗi: hoàn tác dữ liệu
+                    System.out.println("Có lỗi xảy ra trong addUserTransaction! Đã rollback dữ liệu an toàn.");
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
