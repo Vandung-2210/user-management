@@ -50,10 +50,7 @@ public class UserDAO implements IUserDAO {
             preparedStatement.setInt(1, id);
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
-                String name = rs.getString("name");
-                String email = rs.getString("email");
-                String country = rs.getString("country");
-                user = new User(id, name, email, country);
+                user = new User(id, rs.getString("name"), rs.getString("email"), rs.getString("country"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -68,11 +65,7 @@ public class UserDAO implements IUserDAO {
              PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_USERS)) {
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                String email = rs.getString("email");
-                String country = rs.getString("country");
-                users.add(new User(id, name, email, country));
+                users.add(new User(rs.getInt("id"), rs.getString("name"), rs.getString("email"), rs.getString("country")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -82,27 +75,23 @@ public class UserDAO implements IUserDAO {
 
     @Override
     public boolean deleteUser(int id) throws Exception {
-        boolean rowDeleted;
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(DELETE_USERS_SQL)) {
             statement.setInt(1, id);
-            rowDeleted = statement.executeUpdate() > 0;
+            return statement.executeUpdate() > 0;
         }
-        return rowDeleted;
     }
 
     @Override
     public boolean updateUser(User user) throws Exception {
-        boolean rowUpdated;
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(UPDATE_USERS_SQL)) {
             statement.setString(1, user.getName());
             statement.setString(2, user.getEmail());
             statement.setString(3, user.getCountry());
             statement.setInt(4, user.getId());
-            rowUpdated = statement.executeUpdate() > 0;
+            return statement.executeUpdate() > 0;
         }
-        return rowUpdated;
     }
 
     @Override
@@ -134,5 +123,39 @@ public class UserDAO implements IUserDAO {
             e.printStackTrace();
         }
         return users;
+    }
+
+    // TRIỂN KHAI GỌI STORED PROCEDURE: get_user_by_id
+    @Override
+    public User getUserById(int id) {
+        User user = null;
+        String query = "{CALL get_user_by_id(?)}";
+        try (Connection connection = getConnection();
+             CallableStatement callableStatement = connection.prepareCall(query)) {
+            callableStatement.setInt(1, id);
+            ResultSet rs = callableStatement.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString("name");
+                String email = rs.getString("email");
+                String country = rs.getString("country");
+                user = new User(id, name, email, country);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return user;
+    }
+
+    // TRIỂN KHAI GỌI STORED PROCEDURE: insert_user
+    @Override
+    public void insertUserStore(User user) throws SQLException {
+        String query = "{CALL insert_user(?, ?, ?)}";
+        try (Connection connection = getConnection();
+             CallableStatement callableStatement = connection.prepareCall(query)) {
+            callableStatement.setString(1, user.getName());
+            callableStatement.setString(2, user.getEmail());
+            callableStatement.setString(3, user.getCountry());
+            callableStatement.executeUpdate();
+        }
     }
 }

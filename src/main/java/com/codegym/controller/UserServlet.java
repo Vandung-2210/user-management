@@ -25,7 +25,8 @@ public class UserServlet extends HttpServlet {
         try {
             switch (action) {
                 case "create":
-                    userDAO.insertUser(new User(request.getParameter("name"), request.getParameter("email"), request.getParameter("country")));
+                    // Gọi Stored Procedure thêm mới
+                    userDAO.insertUserStore(new User(request.getParameter("name"), request.getParameter("email"), request.getParameter("country")));
                     response.sendRedirect("users");
                     break;
                 case "edit":
@@ -51,7 +52,8 @@ public class UserServlet extends HttpServlet {
                     request.getRequestDispatcher("user/create.jsp").forward(request, response);
                     break;
                 case "edit":
-                    request.setAttribute("user", userDAO.selectUser(Integer.parseInt(request.getParameter("id"))));
+                    // Gọi Stored Procedure tìm theo ID
+                    request.setAttribute("user", userDAO.getUserById(Integer.parseInt(request.getParameter("id"))));
                     request.getRequestDispatcher("user/edit.jsp").forward(request, response);
                     break;
                 case "delete":
