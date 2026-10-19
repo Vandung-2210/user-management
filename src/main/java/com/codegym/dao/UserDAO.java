@@ -289,4 +289,47 @@ public class UserDAO implements IUserDAO {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public List<User> selectAllUsersProcedure() {
+        List<User> users = new ArrayList<>();
+        String query = "{CALL get_all_users()}";
+        try (Connection connection = getConnection();
+             CallableStatement callableStatement = connection.prepareCall(query);
+             ResultSet rs = callableStatement.executeQuery()) {
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                String email = rs.getString("email");
+                String country = rs.getString("country");
+                users.add(new User(id, name, email, country));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    @Override
+    public boolean updateUserProcedure(User user) throws SQLException {
+        String query = "{CALL update_user_sp(?, ?, ?, ?)}";
+        try (Connection connection = getConnection();
+             CallableStatement callableStatement = connection.prepareCall(query)) {
+            callableStatement.setInt(1, user.getId());
+            callableStatement.setString(2, user.getName());
+            callableStatement.setString(3, user.getEmail());
+            callableStatement.setString(4, user.getCountry());
+            return callableStatement.executeUpdate() > 0;
+        }
+    }
+
+    @Override
+    public boolean deleteUserProcedure(int id) throws SQLException {
+        String query = "{CALL delete_user_sp(?)}";
+        try (Connection connection = getConnection();
+             CallableStatement callableStatement = connection.prepareCall(query)) {
+            callableStatement.setInt(1, id);
+            return callableStatement.executeUpdate() > 0;
+        }
+    }
 }

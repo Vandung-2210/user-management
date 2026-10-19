@@ -40,11 +40,11 @@ public class UserServlet extends HttpServlet {
                     response.sendRedirect("users");
                     break;
                 case "edit":
-                    userDAO.updateUser(new User(Integer.parseInt(request.getParameter("id")), request.getParameter("name"), request.getParameter("email"), request.getParameter("country")));
+                    userDAO.updateUserProcedure(new User(Integer.parseInt(request.getParameter("id")), request.getParameter("name"), request.getParameter("email"), request.getParameter("country")));
                     response.sendRedirect("users");
                     break;
                 case "delete":
-                    userDAO.deleteUser(Integer.parseInt(request.getParameter("id")));
+                    userDAO.deleteUserProcedure(Integer.parseInt(request.getParameter("id")));
                     response.sendRedirect("users");
                     break;
             }
@@ -86,7 +86,7 @@ public class UserServlet extends HttpServlet {
                     testUseTran(request, response);
                     break;
                 default:
-                    List<User> listUser = userDAO.selectAllUsers();
+                    List<User> listUser = userDAO.selectAllUsersProcedure();
                     request.setAttribute("listUser", listUser);
                     request.getRequestDispatcher("user/list.jsp").forward(request, response);
                     break;
