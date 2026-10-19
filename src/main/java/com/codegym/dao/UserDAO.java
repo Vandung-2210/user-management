@@ -224,7 +224,6 @@ public class UserDAO implements IUserDAO {
         }
     }
 
-    // TRIỂN KHAI THỰC THI SQL KHÔNG DÙNG TRANSACTION (CỐ TÌNH TẠO LỖI ĐỂ QUAN SÁT)
     @Override
     public void insertUpdateWithoutTransaction() {
         try (Connection conn = getConnection();
@@ -245,13 +244,48 @@ public class UserDAO implements IUserDAO {
             psInsert.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
             psInsert.execute();
 
-            // Cố tình truyền sai vị trí index tham số để kích hoạt ngoại lệ
             psUpdate.setBigDecimal(2, new BigDecimal(999.99));
             psUpdate.setString(2, "Quynh");
             psUpdate.execute();
 
         } catch (Exception e) {
             System.out.println("Đã bắt được lỗi trong quá trình thực thi SQL không Transaction:");
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void insertUpdateUseTransaction() {
+        try (Connection conn = getConnection();
+             Statement statement = conn.createStatement();
+             PreparedStatement psInsert = conn.prepareStatement(SQL_INSERT);
+             PreparedStatement psUpdate = conn.prepareStatement(SQL_UPDATE)) {
+
+            statement.execute(SQL_TABLE_DROP);
+            statement.execute(SQL_TABLE_CREATE);
+
+            conn.setAutoCommit(false);
+
+            psInsert.setString(1, "Quynh");
+            psInsert.setBigDecimal(2, new BigDecimal(10));
+            psInsert.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            psInsert.execute();
+
+            psInsert.setString(1, "Ngan");
+            psInsert.setBigDecimal(2, new BigDecimal(20));
+            psInsert.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            psInsert.execute();
+
+            psUpdate.setBigDecimal(1, new BigDecimal(999.99));
+            psUpdate.setString(2, "Quynh");
+            psUpdate.execute();
+
+            conn.commit();
+            conn.setAutoCommit(true);
+            System.out.println("Transaction hoàn tất và commit thành công!");
+
+        } catch (Exception e) {
+            System.out.println("Lỗi xảy ra, Transaction tự động huỷ bỏ (rollback)!");
             e.printStackTrace();
         }
     }

@@ -82,6 +82,9 @@ public class UserServlet extends HttpServlet {
                 case "test-without-tran":
                     testWithoutTran(request, response);
                     break;
+                case "test-use-tran":
+                    testUseTran(request, response);
+                    break;
                 default:
                     List<User> listUser = userDAO.selectAllUsers();
                     request.setAttribute("listUser", listUser);
@@ -96,5 +99,10 @@ public class UserServlet extends HttpServlet {
     private void testWithoutTran(HttpServletRequest request, HttpServletResponse response) {
         userDAO.insertUpdateWithoutTransaction();
         System.out.println("Đã chạy xong hàm testWithoutTran. Hãy kiểm tra database!");
+    }
+
+    private void testUseTran(HttpServletRequest request, HttpServletResponse response) {
+        userDAO.insertUpdateUseTransaction();
+        System.out.println("Hoàn tất gọi hàm testUseTran!");
     }
 }
