@@ -13,6 +13,8 @@
         input[type="text"], input[type="email"] { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         .btn { padding: 10px; background-color: #27ae60; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; margin-top: 10px; }
         a { display: block; text-align: center; margin-top: 15px; color: #1b2a7a; text-decoration: none; font-weight: bold; }
+        .perm-group { display: flex; gap: 15px; margin-top: 5px; }
+        .perm-group label { font-weight: normal; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -30,6 +32,15 @@
             <div class="form-group">
                 <label>Quốc gia:</label>
                 <input type="text" name="country" required />
+            </div>
+            <div class="form-group">
+                <label>Quyền hạn (Permissions):</label>
+                <div class="perm-group">
+                    <label><input type="checkbox" name="permissions" value="1"> Thêm (Add)</label>
+                    <label><input type="checkbox" name="permissions" value="2"> Sửa (Edit)</label>
+                    <label><input type="checkbox" name="permissions" value="3"> Xoá (Delete)</label>
+                    <label><input type="checkbox" name="permissions" value="4"> Xem (View)</label>
+                </div>
             </div>
             <button type="submit" class="btn">Lưu thông tin</button>
         </form>

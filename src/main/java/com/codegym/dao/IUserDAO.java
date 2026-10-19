@@ -13,7 +13,9 @@ public interface IUserDAO {
     List<User> searchByCountry(String country);
     List<User> sortByName();
 
-    // Phương thức sử dụng Stored Procedure
     User getUserById(int id);
     void insertUserStore(User user) throws SQLException;
+
+    // PHƯƠNG THỨC XỬ LÝ TRANSACTION
+    void addUserTransaction(User user, int[] permissionIds) throws SQLException;
 }

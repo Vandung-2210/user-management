@@ -125,7 +125,6 @@ public class UserDAO implements IUserDAO {
         return users;
     }
 
-    // TRIỂN KHAI GỌI STORED PROCEDURE: get_user_by_id
     @Override
     public User getUserById(int id) {
         User user = null;
@@ -135,10 +134,7 @@ public class UserDAO implements IUserDAO {
             callableStatement.setInt(1, id);
             ResultSet rs = callableStatement.executeQuery();
             while (rs.next()) {
-                String name = rs.getString("name");
-                String email = rs.getString("email");
-                String country = rs.getString("country");
-                user = new User(id, name, email, country);
+                user = new User(id, rs.getString("name"), rs.getString("email"), rs.getString("country"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -146,7 +142,6 @@ public class UserDAO implements IUserDAO {
         return user;
     }
 
-    // TRIỂN KHAI GỌI STORED PROCEDURE: insert_user
     @Override
     public void insertUserStore(User user) throws SQLException {
         String query = "{CALL insert_user(?, ?, ?)}";
@@ -156,6 +151,63 @@ public class UserDAO implements IUserDAO {
             callableStatement.setString(2, user.getEmail());
             callableStatement.setString(3, user.getCountry());
             callableStatement.executeUpdate();
+        }
+    }
+
+    // THỰC HIỆN THÊM USER CÙNG PHÂN QUYỀN BẰNG TRANSACTION
+    @Override
+    public void addUserTransaction(User user, int[] permissionIds) throws SQLException {
+        Connection connection = null;
+        PreparedStatement pstmtUser = null;
+        PreparedStatement pstmtAssignment = null;
+        ResultSet rs = null;
+
+        try {
+            connection = getConnection();
+            connection.setAutoCommit(false); // 1. Bật transaction
+
+            String insertUserSql = "INSERT INTO users (name, email, country) VALUES (?, ?, ?)";
+            pstmtUser = connection.prepareStatement(insertUserSql, Statement.RETURN_GENERATED_KEYS);
+            pstmtUser.setString(1, user.getName());
+            pstmtUser.setString(2, user.getEmail());
+            pstmtUser.setString(3, user.getCountry());
+            pstmtUser.executeUpdate();
+
+            rs = pstmtUser.getGeneratedKeys();
+            int userId = 0;
+            if (rs.next()) {
+                userId = rs.getInt(1);
+            }
+
+            if (permissionIds != null && permissionIds.length > 0) {
+                String insertPermissionSql = "INSERT INTO user_permission (user_id, permission_id) VALUES (?, ?)";
+                pstmtAssignment = connection.prepareStatement(insertPermissionSql);
+                for (int permissionId : permissionIds) {
+                    pstmtAssignment.setInt(1, userId);
+                    pstmtAssignment.setInt(2, permissionId);
+                    pstmtAssignment.executeUpdate();
+                }
+            }
+
+            connection.commit(); // 2. Thành công -> commit
+        } catch (SQLException e) {
+            if (connection != null) {
+                try {
+                    connection.rollback(); // 3. Lỗi -> rollback
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (rs != null) rs.close();
+            if (pstmtUser != null) pstmtUser.close();
+            if (pstmtAssignment != null) pstmtAssignment.close();
+            if (connection != null) {
+                connection.setAutoCommit(true);
+                connection.close();
+            }
         }
     }
 }

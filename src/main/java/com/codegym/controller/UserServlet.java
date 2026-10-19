@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
+import mechanical.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -25,8 +26,18 @@ public class UserServlet extends HttpServlet {
         try {
             switch (action) {
                 case "create":
-                    // Gọi Stored Procedure thêm mới
-                    userDAO.insertUserStore(new User(request.getParameter("name"), request.getParameter("email"), request.getParameter("country")));
+                    String name = request.getParameter("name");
+                    String email = request.getParameter("email");
+                    String country = request.getParameter("country");
+                    String[] permissionsStr = request.getParameterValues("permissions");
+                    int[] permissions = null;
+                    if (permissionsStr != null) {
+                        permissions = new int[permissionsStr.length];
+                        for (int i = 0; i < permissionsStr.length; i++) {
+                            permissions[i] = Integer.parseInt(permissionsStr[i]);
+                        }
+                    }
+                    userDAO.addUserTransaction(new User(name, email, country), permissions);
                     response.sendRedirect("users");
                     break;
                 case "edit":
@@ -52,7 +63,6 @@ public class UserServlet extends HttpServlet {
                     request.getRequestDispatcher("user/create.jsp").forward(request, response);
                     break;
                 case "edit":
-                    // Gọi Stored Procedure tìm theo ID
                     request.setAttribute("user", userDAO.getUserById(Integer.parseInt(request.getParameter("id"))));
                     request.getRequestDispatcher("user/edit.jsp").forward(request, response);
                     break;
