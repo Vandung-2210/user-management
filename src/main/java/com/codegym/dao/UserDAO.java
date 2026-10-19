@@ -1,7 +1,9 @@
 package com.codegym.dao;
 
 import com.codegym.model.User;
+import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +19,18 @@ public class UserDAO implements IUserDAO {
     private static final String UPDATE_USERS_SQL = "UPDATE users SET name = ?, email = ?, country = ? WHERE id = ?;";
     private static final String SEARCH_BY_COUNTRY_SQL = "SELECT * FROM users WHERE country LIKE ?;";
     private static final String SORT_BY_NAME_SQL = "SELECT * FROM users ORDER BY name ASC;";
+
+    private static final String SQL_INSERT = "INSERT INTO Employee (name, salary, created_Date) VALUES (?,?,?)";
+    private static final String SQL_UPDATE = "UPDATE Employee SET salary=? WHERE name=?";
+    private static final String SQL_TABLE_CREATE = "CREATE TABLE Employee"
+            + "("
+            + " id INT(11) AUTO_INCREMENT,"
+            + " name VARCHAR(100) NOT NULL,"
+            + " salary DECIMAL(15, 2) NOT NULL,"
+            + " created_Date TIMESTAMP,"
+            + " PRIMARY KEY (id)"
+            + ")";
+    private static final String SQL_TABLE_DROP = "DROP TABLE IF EXISTS Employee";
 
     public UserDAO() {}
 
@@ -154,7 +168,6 @@ public class UserDAO implements IUserDAO {
         }
     }
 
-    // THỰC HIỆN THÊM USER CÙNG PHÂN QUYỀN BẰNG TRANSACTION
     @Override
     public void addUserTransaction(User user, int[] permissionIds) throws SQLException {
         Connection connection = null;
@@ -164,7 +177,7 @@ public class UserDAO implements IUserDAO {
 
         try {
             connection = getConnection();
-            connection.setAutoCommit(false); // 1. Bật transaction
+            connection.setAutoCommit(false);
 
             String insertUserSql = "INSERT INTO users (name, email, country) VALUES (?, ?, ?)";
             pstmtUser = connection.prepareStatement(insertUserSql, Statement.RETURN_GENERATED_KEYS);
@@ -189,11 +202,11 @@ public class UserDAO implements IUserDAO {
                 }
             }
 
-            connection.commit(); // 2. Thành công -> commit
+            connection.commit();
         } catch (SQLException e) {
             if (connection != null) {
                 try {
-                    connection.rollback(); // 3. Lỗi -> rollback
+                    connection.rollback();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
@@ -208,6 +221,38 @@ public class UserDAO implements IUserDAO {
                 connection.setAutoCommit(true);
                 connection.close();
             }
+        }
+    }
+
+    // TRIỂN KHAI THỰC THI SQL KHÔNG DÙNG TRANSACTION (CỐ TÌNH TẠO LỖI ĐỂ QUAN SÁT)
+    @Override
+    public void insertUpdateWithoutTransaction() {
+        try (Connection conn = getConnection();
+             Statement statement = conn.createStatement();
+             PreparedStatement psInsert = conn.prepareStatement(SQL_INSERT);
+             PreparedStatement psUpdate = conn.prepareStatement(SQL_UPDATE)) {
+
+            statement.execute(SQL_TABLE_DROP);
+            statement.execute(SQL_TABLE_CREATE);
+
+            psInsert.setString(1, "Quynh");
+            psInsert.setBigDecimal(2, new BigDecimal(10));
+            psInsert.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            psInsert.execute();
+
+            psInsert.setString(1, "Ngan");
+            psInsert.setBigDecimal(2, new BigDecimal(20));
+            psInsert.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            psInsert.execute();
+
+            // Cố tình truyền sai vị trí index tham số để kích hoạt ngoại lệ
+            psUpdate.setBigDecimal(2, new BigDecimal(999.99));
+            psUpdate.setString(2, "Quynh");
+            psUpdate.execute();
+
+        } catch (Exception e) {
+            System.out.println("Đã bắt được lỗi trong quá trình thực thi SQL không Transaction:");
+            e.printStackTrace();
         }
     }
 }

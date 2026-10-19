@@ -6,7 +6,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
-import mechanical.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -80,6 +79,9 @@ public class UserServlet extends HttpServlet {
                     request.setAttribute("listUser", sortUsers);
                     request.getRequestDispatcher("user/list.jsp").forward(request, response);
                     break;
+                case "test-without-tran":
+                    testWithoutTran(request, response);
+                    break;
                 default:
                     List<User> listUser = userDAO.selectAllUsers();
                     request.setAttribute("listUser", listUser);
@@ -89,5 +91,10 @@ public class UserServlet extends HttpServlet {
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
+    }
+
+    private void testWithoutTran(HttpServletRequest request, HttpServletResponse response) {
+        userDAO.insertUpdateWithoutTransaction();
+        System.out.println("Đã chạy xong hàm testWithoutTran. Hãy kiểm tra database!");
     }
 }
